@@ -98,6 +98,36 @@ return [
             'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
 
+        'one' => [
+            'driver' => env('DB_ONE_CONNECTION', 'pgsql'),
+            'url' => env('DB_ONE_URL'),
+            'host' => env('DB_ONE_HOST', '127.0.0.1'),
+            'port' => env('DB_ONE_PORT', '5432'),
+            'database' => env('DB_ONE_DATABASE', 'install_one'),
+            'username' => env('DB_ONE_USERNAME', 'root'),
+            'password' => env('DB_ONE_PASSWORD', ''),
+            'charset' => env('DB_ONE_CHARSET', env('DB_CHARSET', 'utf8')),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => env('DB_ONE_SEARCH_PATH', 'public'),
+            'sslmode' => env('DB_ONE_SSLMODE', 'prefer'),
+        ],
+
+        'two' => [
+            'driver' => env('DB_TWO_CONNECTION', 'pgsql'),
+            'url' => env('DB_TWO_URL'),
+            'host' => env('DB_TWO_HOST', '127.0.0.1'),
+            'port' => env('DB_TWO_PORT', '5432'),
+            'database' => env('DB_TWO_DATABASE', 'install_two'),
+            'username' => env('DB_TWO_USERNAME', 'root'),
+            'password' => env('DB_TWO_PASSWORD', ''),
+            'charset' => env('DB_TWO_CHARSET', env('DB_CHARSET', 'utf8')),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => env('DB_TWO_SEARCH_PATH', 'public'),
+            'sslmode' => env('DB_TWO_SSLMODE', 'prefer'),
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),
