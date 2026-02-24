@@ -5,10 +5,17 @@
     "description": "The skeleton application for the Laravel framework.",
     "keywords": ["laravel", "framework"],
     "license": "MIT",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/LTD-Beget/openapi-vps-php.git"
+        }
+    ],
     "require": {
         "php": "^8.2",
         "laravel/framework": "^12.0",
-        "laravel/tinker": "^2.10.1"
+        "laravel/tinker": "^2.10.1",
+        "LTD-Beget/openapi-vps-php": "*@dev"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
