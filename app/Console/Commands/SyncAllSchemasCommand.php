@@ -40,7 +40,9 @@ class SyncAllSchemasCommand extends Command
 
             // Предварительно заполняем таблицу всеми схемами и таблицами
             $this->info("Pre-filling sync status table...");
+            $schemaCounts = [];
             foreach ($schemaNames as $schema) {
+                $schemaCounts[$schema] = 0;
                 $tables = DB::connection($connOne)->select("
                     SELECT table_name
                     FROM information_schema.tables
@@ -48,7 +50,14 @@ class SyncAllSchemasCommand extends Command
                 ", [$schema]);
 
                 foreach ($tables as $table) {
-                    $countOne = DB::connection($connOne)->table("$schema.$table->table_name")->count();
+                    try {
+                        $countOne = DB::connection($connOne)->table("$schema.$table->table_name")->count('id');
+                    }
+                    catch (\Exception $e) {
+                        $countOne = DB::connection($connOne)->table("$schema.$table->table_name")->count();
+                    }
+                    $this->info("$schema.$table->table_name - $countOne");
+                    $schemaCounts[$schema] += $countOne;
                     DB::connection($connOne)->table('public.install_sync')->insert([
                         'schema_name' => $schema,
                         'table_name' => $table->table_name,
@@ -59,6 +68,11 @@ class SyncAllSchemasCommand extends Command
                     ]);
                 }
             }
+
+            // Сортируем схемы по количеству записей по возрастанию
+            asort($schemaCounts);
+            $schemaNames = array_keys($schemaCounts);
+            $this->info("Sorted schemas by record count: " . implode(', ', $schemaNames));
 
             foreach ($schemaNames as $schema) {
                 $this->newLine();

@@ -16,13 +16,21 @@ class SyncSchemaCommand extends Command
         $connOne = 'one';
         $connTwo = 'two';
 
+        // Таблицы, для которых только создаем структуру, без данных
+        $excludeDataTables = [
+            'messenger.files',
+            'messenger.messages',
+            'messenger.messages_copy1',
+            'messenger.messages_copy1',
+        ];
+
         $this->info("Starting sync for schema: $schema");
 
         try {
             $this->dropObjects($connTwo, $schema);
             $this->syncSequences($connOne, $connTwo, $schema);
             $this->syncStructure($connOne, $connTwo, $schema);
-            $this->syncData($connOne, $connTwo, $schema);
+            $this->syncData($connOne, $connTwo, $schema, $excludeDataTables);
 
             DB::connection($connOne)->table('public.install_sync')
                 ->where('schema_name', $schema)
@@ -153,7 +161,7 @@ class SyncSchemaCommand extends Command
         return $sql;
     }
 
-    protected function syncData($from, $to, $schema)
+    protected function syncData($from, $to, $schema, array $excludeDataTables = [])
     {
         $this->comment("Syncing data from $from to $to...");
 
@@ -172,6 +180,12 @@ class SyncSchemaCommand extends Command
         // Сортируем таблицы: сначала те, где <= 100000 записей, потом остальные
         $tablesWithCounts = [];
         foreach ($tables as $table) {
+            $fullTableName = "$schema.$table->table_name";
+            if (in_array($fullTableName, $excludeDataTables)) {
+                $this->line("  Skipping data sync for excluded table: $fullTableName");
+                continue;
+            }
+
             $count = $syncStats->get($table->table_name)->count_one ?? 0;
             $tablesWithCounts[] = (object)[
                 'table_name' => $table->table_name,
