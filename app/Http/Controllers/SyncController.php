@@ -26,8 +26,23 @@ class SyncController extends Controller
 
         $totalTablesAll = $syncData->count();
         $completedTablesAll = $syncData->where('status', 'completed')->count();
-        $overallProgress = $totalTablesAll > 0 ? ($completedTablesAll / $totalTablesAll) * 100 : 0;
+        $overallProgressTables = $totalTablesAll > 0 ? ($completedTablesAll / $totalTablesAll) * 100 : 0;
 
-        return view('sync.index', compact('syncData', 'schemas', 'overallProgress', 'totalTablesAll', 'completedTablesAll'));
+        $totalRowsOne = $syncData->sum('count_one');
+        $totalRowsTwo = $syncData->sum('count_two');
+        $overallProgressRows = $totalRowsOne > 0 ? ($totalRowsTwo / $totalRowsOne) * 100 : 0;
+        // Ограничиваем 100%, если вдруг в count_two больше записей (хотя это странно для синхронизации)
+        $overallProgressRows = min(100, $overallProgressRows);
+
+        return view('sync.index', compact(
+            'syncData',
+            'schemas',
+            'overallProgressTables',
+            'totalTablesAll',
+            'completedTablesAll',
+            'overallProgressRows',
+            'totalRowsOne',
+            'totalRowsTwo'
+        ));
     }
 }

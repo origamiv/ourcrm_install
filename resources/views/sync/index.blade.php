@@ -15,17 +15,33 @@
         <h1 class="mb-4">Статус синхронизации</h1>
 
         <div class="row mb-4">
-            <div class="col-md-12">
-                <div class="card border-primary shadow-sm">
+            <div class="col-md-6">
+                <div class="card border-primary shadow-sm h-100">
                     <div class="card-body">
-                        <h3 class="card-title text-primary">Общий прогресс БД</h3>
+                        <h3 class="card-title text-primary">Прогресс по таблицам</h3>
                         <div class="d-flex justify-content-between mb-2">
                             <strong>Всего таблиц: {{ $totalTablesAll }}</strong>
-                            <span>Завершено: {{ $completedTablesAll }} ({{ round($overallProgress, 2) }}%)</span>
+                            <span>Завершено: {{ $completedTablesAll }} ({{ round($overallProgressTables, 2) }}%)</span>
                         </div>
                         <div class="progress" style="height: 35px;">
-                            <div class="progress-bar bg-primary progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ $overallProgress }}%" aria-valuenow="{{ $overallProgress }}" aria-valuemin="0" aria-valuemax="100">
-                                <h5 class="mb-0">{{ round($overallProgress, 2) }}%</h5>
+                            <div class="progress-bar bg-primary progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ $overallProgressTables }}%" aria-valuenow="{{ $overallProgressTables }}" aria-valuemin="0" aria-valuemax="100">
+                                <h5 class="mb-0">{{ round($overallProgressTables, 2) }}%</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-info shadow-sm h-100">
+                    <div class="card-body">
+                        <h3 class="card-title text-info">Прогресс по записям</h3>
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>Всего записей (One): {{ number_format($totalRowsOne) }}</strong>
+                            <span>Синхронизировано (Two): {{ number_format($totalRowsTwo) }} ({{ round($overallProgressRows, 2) }}%)</span>
+                        </div>
+                        <div class="progress" style="height: 35px;">
+                            <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ $overallProgressRows }}%" aria-valuenow="{{ $overallProgressRows }}" aria-valuemin="0" aria-valuemax="100">
+                                <h5 class="mb-0 text-dark">{{ round($overallProgressRows, 2) }}%</h5>
                             </div>
                         </div>
                     </div>
