@@ -15,6 +15,12 @@ class SyncAllSchemasCommand extends Command
         $connOne = 'one';
         $connTwo = 'two';
 
+        $excludeDataTables = [];
+        $excludeFile = base_path('config/exclude_tables.json');
+        if (file_exists($excludeFile)) {
+            $excludeDataTables = json_decode(file_get_contents($excludeFile), true) ?: [];
+        }
+
         $this->info("Fetching schemas from connection: $connOne");
 
         // Очищаем таблицу статусов перед началом
@@ -50,13 +56,21 @@ class SyncAllSchemasCommand extends Command
                 ", [$schema]);
 
                 foreach ($tables as $table) {
-                    try {
-                        $countOne = DB::connection($connOne)->table("$schema.$table->table_name")->count('id');
+                    $fullTableName = "$schema.$table->table_name";
+                    $countOne = 0;
+
+                    if (in_array($fullTableName, $excludeDataTables)) {
+                        $this->info("$fullTableName - Excluded (setting count to 0)");
+                    } else {
+                        try {
+                            $countOne = DB::connection($connOne)->table($fullTableName)->count('id');
+                        }
+                        catch (\Exception $e) {
+                            $countOne = DB::connection($connOne)->table($fullTableName)->count();
+                        }
+                        $this->info("$fullTableName - $countOne");
                     }
-                    catch (\Exception $e) {
-                        $countOne = DB::connection($connOne)->table("$schema.$table->table_name")->count();
-                    }
-                    $this->info("$schema.$table->table_name - $countOne");
+
                     $schemaCounts[$schema] += $countOne;
                     DB::connection($connOne)->table('public.install_sync')->insert([
                         'schema_name' => $schema,

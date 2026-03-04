@@ -17,12 +17,11 @@ class SyncSchemaCommand extends Command
         $connTwo = 'two';
 
         // Таблицы, для которых только создаем структуру, без данных
-        $excludeDataTables = [
-            'messenger.files',
-            'messenger.messages',
-            'messenger.messages_copy1',
-            'messenger.messages_copy1',
-        ];
+        $excludeDataTables = [];
+        $excludeFile = base_path('config/exclude_tables.json');
+        if (file_exists($excludeFile)) {
+            $excludeDataTables = json_decode(file_get_contents($excludeFile), true) ?: [];
+        }
 
         $this->info("Starting sync for schema: $schema");
 
