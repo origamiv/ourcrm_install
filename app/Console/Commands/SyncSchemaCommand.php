@@ -173,10 +173,17 @@ class SyncSchemaCommand extends Command
 
             if ($count === 0) continue;
 
-            DB::connection($from)->table($fullTableName)->orderByRaw('1')->chunk(2000, function ($rows) use ($to, $fullTableName) {
+            $bar = $this->output->createProgressBar($count);
+            $bar->start();
+
+            DB::connection($from)->table($fullTableName)->orderByRaw('1')->chunk(2000, function ($rows) use ($to, $fullTableName, $bar) {
                 $data = array_map(fn($row) => (array)$row, $rows->toArray());
                 DB::connection($to)->table($fullTableName)->insert($data);
+                $bar->advance(count($data));
             });
+
+            $bar->finish();
+            $this->line("");
         }
 
         foreach ($tables as $table) {
