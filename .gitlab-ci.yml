@@ -9,7 +9,7 @@ deploy-prod:
     - echo "Используется стенд $MASTER_SERVER directory $MASTER_DIR"
     - whoami
     - ssh -T root@$MASTER_SERVER "cd $MASTER_DIR && pwd && ls -la"
-    - ssh -T root@$MASTER_SERVER "cd $MASTER_DIR && git config --global --add safe.directory /var/www/chats.our24.ru"
+    - ssh -T root@$MASTER_SERVER "cd $MASTER_DIR && git config --global --add safe.directory /var/www/install.our24.ru"
     - ssh -T root@$MASTER_SERVER "cd $MASTER_DIR && git status"
     - ssh -T root@$MASTER_SERVER "cd $MASTER_DIR && git stash && git clean -fd && git checkout master && git pull"
     - ssh -T root@$MASTER_SERVER "cd $MASTER_DIR && sh deploy.sh"
