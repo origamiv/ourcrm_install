@@ -105,7 +105,7 @@ class SyncSchemaCommand extends Command
 
             if ($col->character_maximum_length) {
                 $type .= "($col->character_maximum_length)";
-            } elseif ($col->numeric_precision !== null && !in_array($type, ['int4', 'int8', 'float4', 'float8', 'bool', 'timestamp', 'timestamptz'])) {
+            } elseif ($col->numeric_precision !== null && !in_array($type, ['int2', 'int4', 'int8', 'float4', 'float8', 'bool', 'timestamp', 'timestamptz', 'json', 'jsonb'])) {
                 $type .= "($col->numeric_precision,$col->numeric_scale)";
             }
 
