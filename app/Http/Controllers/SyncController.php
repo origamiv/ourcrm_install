@@ -9,6 +9,11 @@ class SyncController extends Controller
 {
     public function index()
     {
+        return view('sync.index');
+    }
+
+    public function data()
+    {
         $syncData = DB::connection('one')->table('install_sync')->get();
 
         $schemas = $syncData->groupBy('schema_name')->map(function ($tables, $schemaName) {
@@ -22,7 +27,7 @@ class SyncController extends Controller
                 'completed' => $completedTables,
                 'progress' => round($progress, 2),
             ];
-        });
+        })->values();
 
         $totalTablesAll = $syncData->count();
         $completedTablesAll = $syncData->where('status', 'completed')->count();
@@ -31,18 +36,17 @@ class SyncController extends Controller
         $totalRowsOne = $syncData->sum('count_one');
         $totalRowsTwo = $syncData->sum('count_two');
         $overallProgressRows = $totalRowsOne > 0 ? ($totalRowsTwo / $totalRowsOne) * 100 : 0;
-        // Ограничиваем 100%, если вдруг в count_two больше записей (хотя это странно для синхронизации)
         $overallProgressRows = min(100, $overallProgressRows);
 
-        return view('sync.index', compact(
-            'syncData',
-            'schemas',
-            'overallProgressTables',
-            'totalTablesAll',
-            'completedTablesAll',
-            'overallProgressRows',
-            'totalRowsOne',
-            'totalRowsTwo'
-        ));
+        return response()->json([
+            'syncData' => $syncData,
+            'schemas' => $schemas,
+            'overallProgressTables' => round($overallProgressTables, 2),
+            'totalTablesAll' => $totalTablesAll,
+            'completedTablesAll' => $completedTablesAll,
+            'overallProgressRows' => round($overallProgressRows, 2),
+            'totalRowsOne' => $totalRowsOne,
+            'totalRowsTwo' => $totalRowsTwo,
+        ]);
     }
 }

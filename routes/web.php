@@ -8,3 +8,4 @@ Route::get('/', function () {
 });
 
 Route::get('/sync', [SyncController::class, 'index'])->name('sync.index');
+Route::get('/sync/data', [SyncController::class, 'data'])->name('sync.data');
