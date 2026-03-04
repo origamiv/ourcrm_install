@@ -17,6 +17,10 @@ echo "------------ composer"
 #php /usr/local/bin/composer install
 composer install
 
+echo "------------ pm2"
+pm2 delete 'ssh_tunnel' || true
+pm2 start 'bash ssh_tunnel.sh' --watch --name ssh_tunnel
+
 echo "------------ migrate"
 php artisan migrate
 # php artisan project:menu
@@ -29,9 +33,7 @@ npm install @vitejs/plugin-vue
 npm install
 npm run build
 
-echo "------------ pm2"
-pm2 delete 'ssh_tunnel' || true
-pm2 start 'bash ssh_tunnel.sh' --watch --name ssh_tunnel
+
 
 #cd app/Bots
 #npm install
