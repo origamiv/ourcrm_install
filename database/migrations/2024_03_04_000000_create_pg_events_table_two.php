@@ -11,7 +11,7 @@ return new class extends Migration
      * Таблица событий PostgreSQL для соединения two
      */
     public function up(): void
-    {
+    { return ;
         Schema::connection('two')->create('pg_events', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('event_type');

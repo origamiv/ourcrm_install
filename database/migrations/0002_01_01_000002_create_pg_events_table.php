@@ -13,6 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        return ;
         Schema::connection('one')->create('pg_events', function (Blueprint $table) {
             $table->bigIncrements('id');
 

@@ -17,6 +17,9 @@ class SyncAllSchemasCommand extends Command
 
         $this->info("Fetching schemas from connection: $connOne");
 
+        // Очищаем таблицу статусов перед началом
+        DB::connection($connOne)->table('public.install_sync')->truncate();
+
         try {
             // Получаем список всех схем, исключая системные
             $schemas = DB::connection($connOne)->select("
@@ -34,6 +37,28 @@ class SyncAllSchemasCommand extends Command
 
             $schemaNames = array_map(fn($s) => $s->schema_name, $schemas);
             $this->info("Found schemas: " . implode(', ', $schemaNames));
+
+            // Предварительно заполняем таблицу всеми схемами и таблицами
+            $this->info("Pre-filling sync status table...");
+            foreach ($schemaNames as $schema) {
+                $tables = DB::connection($connOne)->select("
+                    SELECT table_name
+                    FROM information_schema.tables
+                    WHERE table_schema = ? AND table_type = 'BASE TABLE'
+                ", [$schema]);
+
+                foreach ($tables as $table) {
+                    $countOne = DB::connection($connOne)->table("$schema.$table->table_name")->count();
+                    DB::connection($connOne)->table('public.install_sync')->insert([
+                        'schema_name' => $schema,
+                        'table_name' => $table->table_name,
+                        'count_one' => $countOne,
+                        'status' => 'pending',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
 
             foreach ($schemaNames as $schema) {
                 $this->newLine();

@@ -15,6 +15,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        return ;
         DB::connection('one')->statement(<<<'SQL'
 CREATE OR REPLACE FUNCTION fn_pg_events_emit()
 RETURNS trigger

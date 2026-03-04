@@ -24,8 +24,16 @@ class SyncSchemaCommand extends Command
             $this->syncStructure($connOne, $connTwo, $schema);
             $this->syncData($connOne, $connTwo, $schema);
 
+            DB::connection($connOne)->table('public.install_sync')
+                ->where('schema_name', $schema)
+                ->update(['status' => 'completed', 'completion_percentage' => 100]);
+
             $this->info("Sync completed successfully!");
         } catch (\Exception $e) {
+            DB::connection($connOne)->table('public.install_sync')
+                ->where('schema_name', $schema)
+                ->update(['status' => 'error']);
+
             $this->error("Error during sync: " . $e->getMessage());
             return Command::FAILURE;
         }
@@ -161,6 +169,11 @@ class SyncSchemaCommand extends Command
         $useTriggers = true;
         foreach ($tables as $table) {
             DB::connection($to)->statement("ALTER TABLE $schema.\"$table->table_name\" DISABLE TRIGGER ALL");
+
+            DB::connection($from)->table('public.install_sync')->updateOrInsert(
+                ['schema_name' => $schema, 'table_name' => $table->table_name],
+                ['is_trigger_active' => false, 'updated_at' => now()]
+            );
         }
 
 
@@ -168,17 +181,47 @@ class SyncSchemaCommand extends Command
             $tableName = $table->table_name;
             $fullTableName = "$schema.$tableName";
 
-            $count = DB::connection($from)->table($fullTableName)->count();
-            $this->line("  Copying table: $tableName ($count rows)");
+            $countOne = DB::connection($from)->table($fullTableName)->count();
 
-            if ($count === 0) continue;
+            // Инициализируем запись в install_sync
+            DB::connection($from)->table('public.install_sync')->updateOrInsert(
+                ['schema_name' => $schema, 'table_name' => $tableName],
+                [
+                    'count_one' => $countOne,
+                    'status' => 'syncing',
+                    'completion_percentage' => 0,
+                    'updated_at' => now()
+                ]
+            );
 
-            $bar = $this->output->createProgressBar($count);
+            $this->line("  Copying table: $tableName ($countOne rows)");
+
+            if ($countOne === 0) {
+                DB::connection($from)->table('public.install_sync')
+                    ->where(['schema_name' => $schema, 'table_name' => $tableName])
+                    ->update(['completion_percentage' => 100, 'status' => 'completed']);
+                continue;
+            }
+
+            $bar = $this->output->createProgressBar($countOne);
             $bar->start();
 
-            DB::connection($from)->table($fullTableName)->orderByRaw('1')->chunk(2000, function ($rows) use ($to, $fullTableName, $bar) {
+            $processed = 0;
+            DB::connection($from)->table($fullTableName)->orderByRaw('1')->chunk(2000, function ($rows) use ($to,$from, $fullTableName, $bar, $schema, $tableName, $countOne, &$processed) {
                 $data = array_map(fn($row) => (array)$row, $rows->toArray());
                 DB::connection($to)->table($fullTableName)->insert($data);
+
+                $processed += count($data);
+                $percentage = round(($processed / $countOne) * 100, 2);
+
+                DB::connection($from)->table('public.install_sync')
+                    ->where(['schema_name' => $schema, 'table_name' => $tableName])
+                    ->update([
+                        'count_two' => $processed,
+                        'completion_percentage' => $percentage,
+                        'updated_at' => now()
+                    ]);
+
                 $bar->advance(count($data));
             });
 
@@ -188,6 +231,10 @@ class SyncSchemaCommand extends Command
 
         foreach ($tables as $table) {
             DB::connection($to)->statement("ALTER TABLE $schema.\"$table->table_name\" ENABLE TRIGGER ALL");
+
+            DB::connection($from)->table('public.install_sync')
+                ->where(['schema_name' => $schema, 'table_name' => $table->table_name])
+                ->update(['is_trigger_active' => true, 'updated_at' => now()]);
         }
 
     }
@@ -223,6 +270,14 @@ class SyncSchemaCommand extends Command
                 if ($val && $val->last_value !== null) {
                     DB::connection($to)->statement("SELECT setval(?, ?, ?)", [$fullSeqName, $val->last_value, $val->is_called]);
                     $this->line("    Sequence $seqName set to $val->last_value (is_called: " . ($val->is_called ? 'true' : 'false') . ")");
+
+                    // Обновляем last_auto_increment_id в install_sync
+                    // Пытаемся найти таблицу, к которой относится сиквенс (упрощенно по имени)
+                    $potentialTableName = str_replace('_id_seq', '', $seqName);
+                    DB::connection($from)->table('public.install_sync')
+                        ->where('schema_name', $schema)
+                        ->where('table_name', $potentialTableName)
+                        ->update(['last_auto_increment_id' => $val->last_value]);
                 }
             } catch (\Exception $e) {
                 $this->warn("    Could not sync sequence $seqName: " . $e->getMessage());
