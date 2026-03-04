@@ -99,7 +99,7 @@ return [
         ],
 
         'one' => [
-            'driver' => env('DB_ONE_CONNECTION', 'pgsql'),
+            'driver' => 'pgsql',
             'url' => env('DB_ONE_URL'),
             'host' => env('DB_ONE_HOST', '127.0.0.1'),
             'port' => env('DB_ONE_PORT', '5432'),
@@ -114,7 +114,7 @@ return [
         ],
 
         'two' => [
-            'driver' => env('DB_TWO_CONNECTION', 'pgsql'),
+            'driver' => 'pgsql',
             'url' => env('DB_TWO_URL'),
             'host' => env('DB_TWO_HOST', '127.0.0.1'),
             'port' => env('DB_TWO_PORT', '5432'),
