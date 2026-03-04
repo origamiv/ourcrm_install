@@ -38,6 +38,15 @@ class SyncController extends Controller
         $overallProgressRows = $totalRowsOne > 0 ? ($totalRowsTwo / $totalRowsOne) * 100 : 0;
         $overallProgressRows = min(100, $overallProgressRows);
 
+        $topTables = $syncData->sortByDesc('count_one')->take(10)->map(function ($row) {
+            return [
+                'full_name' => $row->schema_name . '.' . $row->table_name,
+                'count_one' => $row->count_one,
+                'count_two' => $row->count_two,
+                'percentage' => $row->completion_percentage,
+            ];
+        })->values();
+
         return response()->json([
             'syncData' => $syncData,
             'schemas' => $schemas,
@@ -47,6 +56,7 @@ class SyncController extends Controller
             'overallProgressRows' => round($overallProgressRows, 2),
             'totalRowsOne' => $totalRowsOne,
             'totalRowsTwo' => $totalRowsTwo,
+            'topTables' => $topTables,
         ]);
     }
 }

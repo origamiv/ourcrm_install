@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sync Status (Vue)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
         .progress { height: 25px; }
@@ -27,7 +28,9 @@
             <div class="col-md-6">
                 <div class="card border-primary shadow-sm h-100">
                     <div class="card-body">
-                        <h3 class="card-title text-primary">Прогресс по таблицам</h3>
+                        <h3 class="card-title text-primary">
+                            <i class="bi bi-table me-2"></i>Прогресс по таблицам
+                        </h3>
                         <div class="d-flex justify-content-between mb-2">
                             <strong>Всего таблиц: @{{ stats.totalTablesAll }}</strong>
                             <span>Завершено: @{{ stats.completedTablesAll }} (@{{ stats.overallProgressTables }}%)</span>
@@ -43,7 +46,9 @@
             <div class="col-md-6">
                 <div class="card border-info shadow-sm h-100">
                     <div class="card-body">
-                        <h3 class="card-title text-info">Прогресс по записям</h3>
+                        <h3 class="card-title text-info">
+                            <i class="bi bi-database me-2"></i>Прогресс по записям
+                        </h3>
                         <div class="d-flex justify-content-between mb-2">
                             <strong>Всего записей (One): @{{ formatNumber(stats.totalRowsOne) }}</strong>
                             <span>Синхронизировано (Two): @{{ formatNumber(stats.totalRowsTwo) }} (@{{ stats.overallProgressRows }}%)</span>
@@ -51,6 +56,26 @@
                         <div class="progress" style="height: 35px;">
                             <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" role="progressbar" :style="{ width: stats.overallProgressRows + '%' }">
                                 <h5 class="mb-0 text-dark">@{{ stats.overallProgressRows }}%</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card border-warning shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title text-warning">
+                            <i class="bi bi-bar-chart-steps me-2"></i>Топ-10 больших таблиц
+                        </h3>
+                        <div class="row">
+                            <div v-for="table in topTables" :key="table.full_name" class="col-md-6 mb-2">
+                                <div class="d-flex justify-content-between align-items-center p-2 border rounded bg-white">
+                                    <span class="text-truncate">@{{ table.full_name }}</span>
+                                    <span class="badge bg-secondary rounded-pill">@{{ formatNumber(table.count_one) }} записей</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -132,6 +157,7 @@
             setup() {
                 const syncData = ref([]);
                 const schemas = ref([]);
+                const topTables = ref([]);
                 const stats = ref({
                     overallProgressTables: 0,
                     totalTablesAll: 0,
@@ -151,6 +177,7 @@
 
                         syncData.value = data.syncData;
                         schemas.value = data.schemas;
+                        topTables.value = data.topTables;
                         stats.value = {
                             overallProgressTables: data.overallProgressTables,
                             totalTablesAll: data.totalTablesAll,
@@ -166,8 +193,7 @@
                         loading.value = false;
                     }
                 };
-
-                const formatNumber = (num) => {
+const formatNumber = (num) => {
                     return new Intl.NumberFormat('ru-RU').format(num);
                 };
 
@@ -187,6 +213,7 @@
                 return {
                     syncData,
                     schemas,
+                    topTables,
                     stats,
                     loading,
                     lastUpdate,
