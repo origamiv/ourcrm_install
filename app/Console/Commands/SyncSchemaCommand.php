@@ -44,7 +44,7 @@ class SyncSchemaCommand extends Command
         ", [$schema]);
 
         foreach ($tables as $table) {
-            DB::connection($connection)->statement("DROP TABLE IF EXISTS $schema.$table->table_name CASCADE");
+            DB::connection($connection)->statement("DROP TABLE IF EXISTS $schema.\"$table->table_name\" CASCADE");
         }
 
         $sequences = DB::connection($connection)->select("
@@ -54,7 +54,7 @@ class SyncSchemaCommand extends Command
         ", [$schema]);
 
         foreach ($sequences as $seq) {
-            DB::connection($connection)->statement("DROP SEQUENCE IF EXISTS $schema.$seq->sequence_name CASCADE");
+            DB::connection($connection)->statement("DROP SEQUENCE IF EXISTS $schema.\"$seq->sequence_name\" CASCADE");
         }
     }
 
@@ -109,7 +109,7 @@ class SyncSchemaCommand extends Command
                 $type .= "($col->numeric_precision,$col->numeric_scale)";
             }
 
-            $def = "$col->column_name $type";
+            $def = "\"$col->column_name\" $type";
 
             if ($col->is_nullable === 'NO') {
                 $def .= " NOT NULL";
@@ -120,7 +120,7 @@ class SyncSchemaCommand extends Command
             $colDefs[] = $def;
         }
 
-        $sql = "CREATE TABLE $schema.$table (\n  " . implode(",\n  ", $colDefs);
+        $sql = "CREATE TABLE $schema.\"$table\" (\n  " . implode(",\n  ", $colDefs);
 
         $pkQuery = "
             SELECT a.attname
@@ -133,7 +133,7 @@ class SyncSchemaCommand extends Command
         try {
             $pk = DB::connection($connection)->select($pkQuery);
             if (!empty($pk)) {
-                $pkCols = array_map(fn($p) => $p->attname, $pk);
+                $pkCols = array_map(fn($p) => "\"$p->attname\"", $pk);
                 $sql .= ",\n  PRIMARY KEY (" . implode(', ', $pkCols) . ")";
             }
         } catch (\Exception $e) {
@@ -155,7 +155,14 @@ class SyncSchemaCommand extends Command
             WHERE table_schema = ? AND table_type = 'BASE TABLE'
         ", [$schema]);
 
-        DB::connection($to)->statement("SET session_replication_role = 'replica'");
+        $useTriggers = false;
+
+        $this->comment("Disabling triggers manually...");
+        $useTriggers = true;
+        foreach ($tables as $table) {
+            DB::connection($to)->statement("ALTER TABLE $schema.\"$table->table_name\" DISABLE TRIGGER ALL");
+        }
+
 
         foreach ($tables as $table) {
             $tableName = $table->table_name;
@@ -172,7 +179,10 @@ class SyncSchemaCommand extends Command
             });
         }
 
-        DB::connection($to)->statement("SET session_replication_role = 'origin'");
+        foreach ($tables as $table) {
+            DB::connection($to)->statement("ALTER TABLE $schema.\"$table->table_name\" ENABLE TRIGGER ALL");
+        }
+
     }
 
     protected function syncSequences($from, $to, $schema)
@@ -187,7 +197,7 @@ class SyncSchemaCommand extends Command
 
         foreach ($sequences as $seq) {
             $seqName = $seq->sequence_name;
-            $fullSeqName = "$schema.$seqName";
+            $fullSeqName = "$schema.\"$seqName\"";
 
             try {
                 $this->line("  Creating sequence: $seqName");
