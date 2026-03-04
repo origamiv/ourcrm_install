@@ -1,0 +1,30 @@
+image: ubuntu
+
+deploy-prod:
+  stage: deploy
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+  script:
+    - echo "Используется ветка $CI_COMMIT_BRANCH"
+    - echo "Используется стенд $MASTER_SERVER directory $MASTER_DIR"
+    - whoami
+    - ssh -T root@$MASTER_SERVER "cd $MASTER_DIR && pwd && ls -la"
+    - ssh -T root@$MASTER_SERVER "cd $MASTER_DIR && git config --global --add safe.directory /var/www/chats.our24.ru"
+    - ssh -T root@$MASTER_SERVER "cd $MASTER_DIR && git status"
+    - ssh -T root@$MASTER_SERVER "cd $MASTER_DIR && git stash && git clean -fd && git checkout master && git pull"
+    - ssh -T root@$MASTER_SERVER "cd $MASTER_DIR && sh deploy.sh"
+  environment: production
+
+deploy-dev:
+  stage: deploy
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+  script:
+    - echo "Используется ветка $CI_COMMIT_BRANCH"
+    - echo "Используется стенд $SERVER directory $DIR"
+    - whoami
+    - ssh dev@$SERVER "cd $DIR && pwd && ls -la"
+    - ssh dev@$SERVER "cd $DIR && git status"
+    - ssh dev@$SERVER "cd $DIR && git stash && git clean -fd && git checkout dev && git pull"
+    - ssh dev@$SERVER "cd $DIR && sh deploy.sh"
+  environment: dev
