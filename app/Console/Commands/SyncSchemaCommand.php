@@ -163,6 +163,35 @@ class SyncSchemaCommand extends Command
             WHERE table_schema = ? AND table_type = 'BASE TABLE'
         ", [$schema]);
 
+        // Получаем количество записей из таблицы public.install_sync
+        $syncStats = DB::connection($from)->table('public.install_sync')
+            ->where('schema_name', $schema)
+            ->get()
+            ->keyBy('table_name');
+
+        // Сортируем таблицы: сначала те, где <= 100000 записей, потом остальные
+        $tablesWithCounts = [];
+        foreach ($tables as $table) {
+            $count = $syncStats->get($table->table_name)->count_one ?? 0;
+            $tablesWithCounts[] = (object)[
+                'table_name' => $table->table_name,
+                'count' => $count
+            ];
+        }
+
+        usort($tablesWithCounts, function($a, $b) {
+            $limit = 100000;
+            $aLarge = $a->count > $limit;
+            $bLarge = $b->count > $limit;
+
+            if ($aLarge && !$bLarge) return 1;
+            if (!$aLarge && $bLarge) return -1;
+
+            return $a->count <=> $b->count;
+        });
+
+        $tables = $tablesWithCounts;
+
         $useTriggers = false;
 
         $this->comment("Disabling triggers manually...");
@@ -181,7 +210,7 @@ class SyncSchemaCommand extends Command
             $tableName = $table->table_name;
             $fullTableName = "$schema.$tableName";
 
-            $countOne = DB::connection($from)->table($fullTableName)->count();
+            $countOne = $table->count;
 
             // Инициализируем запись в install_sync
             DB::connection($from)->table('public.install_sync')->updateOrInsert(

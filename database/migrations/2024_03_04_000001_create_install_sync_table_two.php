@@ -19,7 +19,7 @@ return new class extends Migration
             $table->bigInteger('count_one')->default(0)->comment('число записей в бд one');
             $table->bigInteger('count_two')->default(0)->comment('число записей в бд two');
             $table->boolean('is_trigger_active')->default(false)->comment('активен ли триггер');
-            $table->decimal('completion_percentage', 5, 2)->default(0)->comment('% выполнения');
+            $table->decimal('completion_percentage', 8, 2)->default(0)->comment('% выполнения');
             $table->string('status')->default('pending')->comment('статус');
             $table->timestamps();
 
