@@ -41,6 +41,6 @@ npm run build
 #pm2 start 'node mattermost_bot.js' --name chats_mattermost_bot
 #cd ../..
 
-#cd ../pytalking.our24.ru
-# pm2 delete 'pyTalking' || true
-# pm2 start 'bash start.sh' --watch --name pyTalking
+cd ../pytalking.our24.ru
+pm2 delete 'pyTalking' || true
+pm2 start 'bash start.sh' --watch --name pyTalking
