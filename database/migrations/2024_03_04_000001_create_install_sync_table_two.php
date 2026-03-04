@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
+        return ;
         Schema::connection('one')->create('install_sync', function (Blueprint $table) {
-            return ;
             $table->id();
             $table->string('schema_name')->comment('схема');
             $table->string('table_name')->comment('название таблицы');
