@@ -8,32 +8,43 @@ use Illuminate\Support\Facades\Schema;
 
 class SetupPgTriggersCommand extends Command
 {
-    protected $signature = 'pg-events:setup-triggers {--connection=two} {--channel=pg_events}';
-    protected $description = 'Создает триггерную функцию и навешивает триггеры на все таблицы в схеме public';
+    protected $signature = 'pg-events:setup-triggers {--connection=two} {--channel=pg_events} {--remove : Удалить триггеры со всех таблиц}';
+    protected $description = 'Создает/удаляет триггеры на всех таблицах во всех схемах';
 
     public function handle()
     {
         $connectionName = $this->option('connection');
         $channel = $this->option('channel');
+        $remove = $this->option('remove');
         $connection = DB::connection($connectionName);
 
-        $this->info("Настройка триггеров на соединении: {$connectionName}");
+        if ($remove) {
+            $this->info("Удаление триггеров на соединении: {$connectionName}");
+        } else {
+            $this->info("Настройка триггеров на соединении: {$connectionName}");
+            // 1. Создаем триггерную функцию (только при установке)
+            $this->createTriggerFunction($connection, $channel);
+        }
 
-        // 1. Создаем триггерную функцию
-        $this->createTriggerFunction($connection, $channel);
+        // 2. Получаем список всех таблиц во всех схемах (кроме системных)
+        $tables = $this->getAllTables($connection);
 
-        // 2. Получаем список всех таблиц в схеме public
-        $tables = $this->getPublicTables($connection);
+        foreach ($tables as $tableData) {
+            $schema = $tableData->table_schema;
+            $table = $tableData->table_name;
 
-        foreach ($tables as $table) {
             if ($table === 'pg_events' || $table === 'migrations') {
                 continue;
             }
 
-            $this->setupTriggerForTable($connection, $table);
+            if ($remove) {
+                $this->removeTriggerFromTable($connection, $schema, $table);
+            } else {
+                $this->setupTriggerForTable($connection, $schema, $table);
+            }
         }
 
-        $this->info('Настройка завершена успешно.');
+        $this->info($remove ? 'Удаление завершено.' : 'Настройка завершена успешно.');
     }
 
     protected function createTriggerFunction($connection, $channel)
@@ -58,7 +69,7 @@ BEGIN
         v_payload := to_jsonb(OLD);
     END IF;
 
-    INSERT INTO pg_events (
+    INSERT INTO public.pg_events (
         event_type,
         aggregate,
         aggregate_id,
@@ -66,7 +77,7 @@ BEGIN
         created_at
     )
     VALUES (
-        TG_TABLE_NAME || '.' || lower(TG_OP),
+        TG_TABLE_SCHEMA || '.' || TG_TABLE_NAME || '.' || lower(TG_OP),
         TG_TABLE_NAME,
         CASE
             WHEN TG_OP = 'DELETE' THEN OLD.id::text
@@ -91,36 +102,51 @@ SQL;
         $this->line('Триггерная функция fn_pg_events_notify создана/обновлена.');
     }
 
-    protected function getPublicTables($connection)
+    protected function getAllTables($connection)
     {
         return $connection->table('information_schema.tables')
-            ->where('table_schema', 'public')
+            ->select('table_schema', 'table_name')
+            ->whereNotIn('table_schema', ['information_schema', 'pg_catalog'])
             ->where('table_type', 'BASE TABLE')
-            ->pluck('table_name')
+            ->get()
             ->toArray();
     }
 
-    protected function setupTriggerForTable($connection, $table)
+    protected function setupTriggerForTable($connection, $schema, $table)
     {
-        $triggerName = "trg_pg_events_{$table}";
+        $fullTableName = "\"{$schema}\".\"{$table}\"";
+        $triggerName = "trg_pg_events_{$schema}_{$table}";
 
         // Удаляем старый триггер если есть
-        $connection->unprepared("DROP TRIGGER IF EXISTS {$triggerName} ON {$table}");
+        $connection->unprepared("DROP TRIGGER IF EXISTS \"{$triggerName}\" ON {$fullTableName}");
 
         // Создаем новый
         $sql = <<<SQL
-CREATE TRIGGER {$triggerName}
+CREATE TRIGGER "{$triggerName}"
 AFTER INSERT OR UPDATE OR DELETE
-ON {$table}
+ON {$fullTableName}
 FOR EACH ROW
 EXECUTE FUNCTION fn_pg_events_notify();
 SQL;
 
         try {
             $connection->unprepared($sql);
-            $this->line("Триггер создан для таблицы: {$table}");
+            $this->line("Триггер создан для таблицы: {$fullTableName}");
         } catch (\Exception $e) {
-            $this->error("Ошибка при создании триггера для таблицы {$table}: " . $e->getMessage());
+            $this->error("Ошибка при создании триггера для таблицы {$fullTableName}: " . $e->getMessage());
+        }
+    }
+
+    protected function removeTriggerFromTable($connection, $schema, $table)
+    {
+        $fullTableName = "\"{$schema}\".\"{$table}\"";
+        $triggerName = "trg_pg_events_{$schema}_{$table}";
+
+        try {
+            $connection->unprepared("DROP TRIGGER IF EXISTS \"{$triggerName}\" ON {$fullTableName}");
+            $this->line("Триггер удален с таблицы: {$fullTableName}");
+        } catch (\Exception $e) {
+            $this->error("Ошибка при удалении триггера с таблицы {$fullTableName}: " . $e->getMessage());
         }
     }
 }
