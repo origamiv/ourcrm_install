@@ -24,6 +24,10 @@ class SyncController extends Controller
             ];
         });
 
-        return view('sync.index', compact('syncData', 'schemas'));
+        $totalTablesAll = $syncData->count();
+        $completedTablesAll = $syncData->where('status', 'completed')->count();
+        $overallProgress = $totalTablesAll > 0 ? ($completedTablesAll / $totalTablesAll) * 100 : 0;
+
+        return view('sync.index', compact('syncData', 'schemas', 'overallProgress', 'totalTablesAll', 'completedTablesAll'));
     }
 }

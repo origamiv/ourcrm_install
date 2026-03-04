@@ -14,6 +14,25 @@
     <div class="container mt-5">
         <h1 class="mb-4">Статус синхронизации</h1>
 
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card border-primary shadow-sm">
+                    <div class="card-body">
+                        <h3 class="card-title text-primary">Общий прогресс БД</h3>
+                        <div class="d-flex justify-content-between mb-2">
+                            <strong>Всего таблиц: {{ $totalTablesAll }}</strong>
+                            <span>Завершено: {{ $completedTablesAll }} ({{ round($overallProgress, 2) }}%)</span>
+                        </div>
+                        <div class="progress" style="height: 35px;">
+                            <div class="progress-bar bg-primary progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ $overallProgress }}%" aria-valuenow="{{ $overallProgress }}" aria-valuemin="0" aria-valuemax="100">
+                                <h5 class="mb-0">{{ round($overallProgress, 2) }}%</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row mb-5">
             <div class="col-md-12">
                 <h3>Прогресс по схемам</h3>
