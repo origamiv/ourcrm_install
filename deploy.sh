@@ -41,6 +41,11 @@ npm run build
 #pm2 start 'node mattermost_bot.js' --name chats_mattermost_bot
 #cd ../..
 
+COMMIT_INFO=$(git log -1 --format="%ad %h %s %an" --date=format:"%d.%m %H:%M")
+curl -G --data-urlencode "message=Релиз install.our24.ru на проде: $COMMIT_INFO" https://aider.our24.ru/send
+
 cd ../pytalking.our24.ru
 pm2 delete 'pyTalking' || true
 pm2 start 'bash start.sh' --watch --name pyTalking
+curl -G --data-urlencode "message=pyTalking перезапущен" https://aider.our24.ru/send
+
