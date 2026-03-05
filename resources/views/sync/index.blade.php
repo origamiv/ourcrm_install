@@ -105,7 +105,38 @@
         <div class="row">
             <div class="col-md-12">
                 <h3>Детализация по таблицам</h3>
-                <div class="table-responsive">
+
+                <!-- Mobile Cards View -->
+                <div class="d-md-none">
+                    <div v-for="row in syncData" :key="'card-' + row.id" class="card mb-3 shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0"><strong>@{{ row.schema_name }}.@{{ row.table_name }}</strong></h6>
+                            <span class="badge" :class="getStatusBadgeClass(row.status)">@{{ row.status }}</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-2">
+                                <div class="col-6 text-muted small">Count One:</div>
+                                <div class="col-6 text-end">@{{ formatNumber(row.count_one) }}</div>
+                                <div class="col-6 text-muted small">Count Two:</div>
+                                <div class="col-6 text-end">@{{ formatNumber(row.count_two) }}</div>
+                            </div>
+                            <div class="progress mb-1" style="height: 15px;">
+                                <div class="progress-bar" :class="row.completion_percentage >= 100 ? 'bg-success' : 'bg-primary'" role="progressbar" :style="{ width: row.completion_percentage + '%' }">
+                                    @{{ row.completion_percentage }}%
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <span class="badge" :class="row.is_trigger_active ? 'bg-success' : 'bg-danger'">
+                                    Trigger: @{{ row.is_trigger_active ? 'Active' : 'Inactive' }}
+                                </span>
+                                <small class="text-muted">@{{ row.updated_at }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Desktop Table View -->
+                <div class="table-responsive d-none d-md-block">
                     <table class="table table-striped table-hover table-bordered bg-white">
                         <thead class="table-dark">
                             <tr>
