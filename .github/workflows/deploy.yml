@@ -22,8 +22,8 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
-            cd ${{ secrets.MASTER_DIR }}
-            git config --global --add safe.directory ${{ secrets.MASTER_DIR }}
+            cd ${{ vars.MASTER_DIR }}
+            git config --global --add safe.directory ${{ vars.MASTER_DIR }}
             git status
             git stash
             git clean -fd
