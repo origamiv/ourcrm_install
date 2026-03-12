@@ -29,4 +29,5 @@ jobs:
             git clean -fd
             git checkout master
             git pull origin master
+            pwd
             sh deploy.sh
