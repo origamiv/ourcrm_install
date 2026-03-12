@@ -9,6 +9,13 @@
 
 ## About Laravel
 
+
+aaPanel Internet Address: https://155.212.229.24:17696/c38e2b74
+aaPanel Internal Address: https://155.212.229.24:17696/c38e2b74
+username: lww1hawx
+password: 4eb36bbf
+
+
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
 - [Simple, fast routing engine](https://laravel.com/docs/routing).
