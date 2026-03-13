@@ -3,11 +3,11 @@
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SlugController;
 use App\Http\Controllers\SyncController;
+use App\Http\Controllers\SystemController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+Route::get('/', [SystemController::class, 'index'])->name('home');
+Route::get('/system/data', [SystemController::class, 'data'])->name('system.data');
 
 Route::get('/slug', [ServiceController::class, 'index'])->name('slug');
 Route::post('/service/git-merge', [ServiceController::class, 'gitMerge'])->name('service.git-merge');
