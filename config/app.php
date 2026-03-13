@@ -123,4 +123,6 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'projects_base_path' => env('PROJECTS_BASE_PATH', '/www/wwwroot'),
+
 ];
