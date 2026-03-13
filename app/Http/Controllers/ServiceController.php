@@ -159,6 +159,65 @@ class ServiceController extends Controller
         return response()->json(['branches' => $branches]);
     }
 
+    public function sendBotMessage(Request $request)
+    {
+        $request->validate([
+            'recipient' => 'required|string|max:100',
+            'message'   => 'required|string|max:4096',
+            'image_url' => 'nullable|url|max:2048',
+        ]);
+
+        $token = config('telegram.bot_token');
+        if (empty($token)) {
+            return response()->json(['status' => 'error', 'message' => 'Токен бота не настроен (TELEGRAM_BOT_TOKEN).'], 500);
+        }
+
+        $chatId   = $request->recipient;
+        $imageUrl = trim($request->input('image_url', ''));
+
+        if ($imageUrl !== '') {
+            $apiUrl  = "https://api.telegram.org/bot{$token}/sendPhoto";
+            $payload = [
+                'chat_id' => $chatId,
+                'photo'   => $imageUrl,
+                'caption' => $request->message,
+            ];
+        } else {
+            $apiUrl  = "https://api.telegram.org/bot{$token}/sendMessage";
+            $payload = [
+                'chat_id' => $chatId,
+                'text'    => $request->message,
+            ];
+        }
+
+        $ch = curl_init($apiUrl);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => json_encode($payload),
+            CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 10,
+        ]);
+        $responseRaw = curl_exec($ch);
+        $curlError   = curl_error($ch);
+        curl_close($ch);
+
+        if ($curlError) {
+            return response()->json(['status' => 'error', 'message' => "Ошибка соединения: {$curlError}"], 502);
+        }
+
+        $tgResponse = json_decode($responseRaw, true);
+        if (!($tgResponse['ok'] ?? false)) {
+            $desc = $tgResponse['description'] ?? 'Неизвестная ошибка Telegram';
+            return response()->json(['status' => 'error', 'message' => "Telegram API: {$desc}"], 422);
+        }
+
+        return response()->json([
+            'status'  => 'sent',
+            'message' => "Сообщение отправлено адресату {$chatId}.",
+        ]);
+    }
+
     private function getSites(): array
     {
         $basePath = config('app.projects_base_path', '/www/wwwroot');

@@ -14,6 +14,7 @@ Route::post('/service/git-merge', [ServiceController::class, 'gitMerge'])->name(
 Route::post('/service/redis-command', [ServiceController::class, 'redisCommand'])->name('service.redis-command');
 Route::get('/service/branches/{project}', [ServiceController::class, 'branches'])->name('service.branches');
 Route::post('/service/deploy-site', [ServiceController::class, 'deploySite'])->name('service.deploy-site');
+Route::post('/service/bot-message', [ServiceController::class, 'sendBotMessage'])->name('service.bot-message');
 
 Route::get('/sync', [SyncController::class, 'index'])->name('sync.index');
 Route::get('/sync/data', [SyncController::class, 'data'])->name('sync.data');

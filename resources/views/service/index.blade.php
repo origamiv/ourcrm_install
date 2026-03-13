@@ -240,6 +240,52 @@
             </div>
         </div>
 
+        {{-- ===== Widget 4: Send Bot Message ===== --}}
+        <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-700">Отправить сообщение в бота</h2>
+                <p class="text-sm text-gray-500 mt-1">Отправить сообщение через Telegram-бота указанному адресату (chat_id или @username).</p>
+            </div>
+            <div class="p-6">
+                <form id="bot-message-form" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {{-- Recipient --}}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Адресат</label>
+                            <input id="bm-recipient" name="recipient" type="text" placeholder="123456789 или @username"
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        </div>
+
+                        {{-- Image URL (optional) --}}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">
+                                URL картинки
+                                <span class="text-gray-400 font-normal">(необязательно)</span>
+                            </label>
+                            <input id="bm-image-url" name="image_url" type="url" placeholder="https://example.com/image.jpg"
+                                class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        </div>
+                    </div>
+
+                    {{-- Message text --}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Текст сообщения</label>
+                        <textarea id="bm-message" name="message" rows="3" placeholder="Введите текст сообщения…"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-y"></textarea>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:opacity-50"
+                            id="bm-submit">
+                            Отправить
+                        </button>
+                        <span id="bm-result" class="text-sm"></span>
+                    </div>
+                </form>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -397,6 +443,57 @@
                 btn.disabled = false;
             }
         });
+        // ───────────────── Bot Message Widget ─────────────────
+
+        document.getElementById('bot-message-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const recipient = document.getElementById('bm-recipient').value.trim();
+            const message   = document.getElementById('bm-message').value.trim();
+            const imageUrl  = document.getElementById('bm-image-url').value.trim();
+            const btn       = document.getElementById('bm-submit');
+            const result    = document.getElementById('bm-result');
+
+            if (!recipient) {
+                result.className = 'text-sm text-red-600';
+                result.textContent = 'Укажите адресата.';
+                return;
+            }
+            if (!message) {
+                result.className = 'text-sm text-red-600';
+                result.textContent = 'Введите текст сообщения.';
+                return;
+            }
+
+            btn.disabled = true;
+            result.className = 'text-sm text-gray-500';
+            result.textContent = 'Отправка…';
+
+            try {
+                const res = await fetch('{{ route("service.bot-message") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': CSRF,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ recipient, message, image_url: imageUrl || null }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    result.className = 'text-sm text-green-600';
+                    result.textContent = data.message;
+                } else {
+                    result.className = 'text-sm text-red-600';
+                    result.textContent = data.message || data.error || 'Ошибка.';
+                }
+            } catch (err) {
+                result.className = 'text-sm text-red-600';
+                result.textContent = 'Сетевая ошибка.';
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
         // ───────────────── Deploy Site Widget ─────────────────
 
         function deployToggleSource(type) {
