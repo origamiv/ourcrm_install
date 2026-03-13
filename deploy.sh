@@ -21,6 +21,9 @@ echo "------------ pm2"
 pm2 delete 'ssh_tunnel' || true
 pm2 start 'bash ssh_tunnel.sh' --watch --name ssh_tunnel
 
+pm2 delete 'git_merge_watcher' || true
+pm2 start 'php artisan git:merge-watcher' --name git_merge_watcher
+
 echo "------------ migrate"
 php artisan migrate
 # php artisan project:menu

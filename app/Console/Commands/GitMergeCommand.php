@@ -52,7 +52,7 @@ class GitMergeCommand extends Command
         foreach ($commands as $cmd) {
             $this->line("Executing: $cmd");
 
-            $fullCommand = "cd " . escapeshellarg($projectPath) . " && sudo -u www $cmd 2>&1";
+            $fullCommand = "cd " . escapeshellarg($projectPath) . " && $cmd 2>&1";
             exec($fullCommand, $output, $resultCode);
 
             if ($resultCode !== 0) {

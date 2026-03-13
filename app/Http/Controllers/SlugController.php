@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
 
 class SlugController extends Controller
 {
@@ -15,26 +15,30 @@ class SlugController extends Controller
             return response()->json(['error' => 'The "from" query parameter is required.'], 400);
         }
 
-        $exitCode = Artisan::call('git:merge', [
+        $queueFile = 'git_merge_queue.json';
+
+        // Читаем текущую очередь
+        $queue = [];
+        if (Storage::disk('local')->exists($queueFile)) {
+            $content = Storage::disk('local')->get($queueFile);
+            $queue = json_decode($content, true) ?: [];
+        }
+
+        // Добавляем новую задачу
+        $queue[] = [
             'project' => $project,
             'to_branch' => $to_branch,
             'from_branch' => $fromBranch,
-        ]);
+            'timestamp' => now()->toDateTimeString(),
+        ];
 
-        $output = Artisan::output();
-
-        if ($exitCode !== 0) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Merge failed',
-                'output' => $output
-            ], 500);
-        }
+        // Сохраняем очередь
+        Storage::disk('local')->put($queueFile, json_encode($queue));
 
         return response()->json([
-            'status' => 'success',
-            'message' => "Successfully merged $fromBranch into $to_branch",
-            'output' => $output
+            'status' => 'queued',
+            'message' => "Merge request for $project ($fromBranch -> $to_branch) has been queued.",
+            'info' => 'The task will be processed by the background watcher shortly.'
         ]);
     }
 }
