@@ -42,7 +42,7 @@ if command -v pm2 >/dev/null 2>&1; then
     pm2 describe ssh_tunnel >/dev/null 2>&1 && pm2 reload ssh_tunnel || pm2 start 'bash ssh_tunnel.sh' --watch --name ssh_tunnel
 
     # git_merge_watcher
-    pm2 describe git_merge_watcher >/dev/null 2>&1 && pm2 reload git_merge_watcher || pm2 start 'php artisan git:merge-watcher' --name git_merge_watcher
+#    pm2 describe git_merge_watcher >/dev/null 2>&1 && pm2 reload git_merge_watcher || pm2 start 'php artisan git:merge-watcher' --name git_merge_watcher
 fi
 
 # -------------------------
