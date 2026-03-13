@@ -62,15 +62,15 @@ npm run build
 # -------------------------
 # Отправка уведомлений о релизе
 # -------------------------
-COMMIT_INFO=$(git log -1 --format="%ad %h %s %an" --date=format:"%d.%m %H:%M")
-curl -G --data-urlencode "message=Релиз install.our24.ru на проде: $COMMIT_INFO" https://aider.our24.ru/send
+#COMMIT_INFO=$(git log -1 --format="%ad %h %s %an" --date=format:"%d.%m %H:%M")
+#curl -G --data-urlencode "message=Релиз install.our24.ru на проде: $COMMIT_INFO" https://aider.our24.ru/send
 
 # -------------------------
 # pyTalking
 # -------------------------
-echo "------------ pyTalking"
-cd ../pytalking.our24.ru
-pm2 describe pyTalking >/dev/null 2>&1 && pm2 reload pyTalking || pm2 start 'bash start.sh' --watch --name pyTalking
-curl -G --data-urlencode "message=pyTalking перезапущен" https://aider.our24.ru/send
+#echo "------------ pyTalking"
+#cd ../pytalking.our24.ru
+#pm2 describe pyTalking >/dev/null 2>&1 && pm2 reload pyTalking || pm2 start 'bash start.sh' --watch --name pyTalking
+#curl -G --data-urlencode "message=pyTalking перезапущен" https://aider.our24.ru/send
 
 echo "------------ DEPLOY DONE"
