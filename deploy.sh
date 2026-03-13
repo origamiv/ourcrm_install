@@ -43,6 +43,9 @@ if command -v pm2 >/dev/null 2>&1; then
 
     # git_merge_watcher
 #    pm2 describe git_merge_watcher >/dev/null 2>&1 && pm2 reload git_merge_watcher || pm2 start 'php artisan git:merge-watcher' --name git_merge_watcher
+
+    # telegram_bot
+    pm2 describe telegram_bot >/dev/null 2>&1 && pm2 reload telegram_bot || pm2 start 'php artisan telegram:listen' --name telegram_bot
 fi
 
 # -------------------------
