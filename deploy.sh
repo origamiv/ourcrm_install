@@ -1,4 +1,13 @@
 #!/bin/bash
+#!/bin/bash
+set -e
+export PATH=/usr/local/bin:/usr/bin:/root/.npm-global/bin:$PATH
+
+# если node через nvm
+if [ -f "$HOME/.nvm/nvm.sh" ]; then
+  . "$HOME/.nvm/nvm.sh"
+fi
+
 set -e
 export COMPOSER_ALLOW_SUPERUSER=1
 # ✅ Задаём алиас на PHP 8.2
