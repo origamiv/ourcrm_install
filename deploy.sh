@@ -19,11 +19,16 @@ echo "------------ composer"
 composer install
 
 echo "------------ pm2"
-pm2 delete 'ssh_tunnel' || true
-pm2 start 'bash ssh_tunnel.sh' --watch --name ssh_tunnel
+export PATH=$PATH:/usr/local/bin:/usr/bin:/root/.npm-global/bin
+command -v pm2 >/dev/null 2>&1 || { echo "pm2 not found, skipping..."; }
 
-pm2 delete 'git_merge_watcher' || true
-pm2 start 'php artisan git:merge-watcher' --name git_merge_watcher
+if command -v pm2 >/dev/null 2>&1; then
+    pm2 delete 'ssh_tunnel' || true
+    pm2 start 'bash ssh_tunnel.sh' --watch --name ssh_tunnel
+
+    pm2 delete 'git_merge_watcher' || true
+    pm2 start 'php artisan git:merge-watcher' --name git_merge_watcher
+fi
 
 echo "------------ migrate"
 php artisan migrate
