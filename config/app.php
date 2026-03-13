@@ -125,4 +125,14 @@ return [
 
     'projects_base_path' => env('PROJECTS_BASE_PATH', '/www/wwwroot'),
 
+    'aapanel' => [
+        'url'       => env('AAPANEL_URL', ''),
+        'key'       => env('AAPANEL_KEY', ''),
+        'server_ip' => env('AAPANEL_SERVER_IP', ''),
+    ],
+
+    'onecloud' => [
+        'token' => env('ONECLOUD_TOKEN', ''),
+    ],
+
 ];
