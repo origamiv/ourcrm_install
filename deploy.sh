@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+export COMPOSER_ALLOW_SUPERUSER=1
 # ✅ Задаём алиас на PHP 8.2
 # alias php="/opt/php82/bin/php"
 
