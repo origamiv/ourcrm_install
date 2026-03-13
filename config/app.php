@@ -135,4 +135,22 @@ return [
         'token' => env('ONECLOUD_TOKEN', ''),
     ],
 
+    'deploy_presets' => [
+        [
+            'id'   => 'ourcrm',
+            'name' => 'OurCRM (основной)',
+            'repo' => 'git@github.com:our24/ourcrm.git',
+        ],
+        [
+            'id'   => 'ourcrm-install',
+            'name' => 'OurCRM Install',
+            'repo' => 'git@github.com:our24/ourcrm_install.git',
+        ],
+        [
+            'id'   => 'laravel-blank',
+            'name' => 'Laravel (чистый)',
+            'repo' => 'git@github.com:laravel/laravel.git',
+        ],
+    ],
+
 ];

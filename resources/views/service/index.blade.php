@@ -140,6 +140,106 @@
             </div>
         </div>
 
+        {{-- ===== Widget 3: Deploy Site ===== --}}
+        <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-700">Развернуть сайт</h2>
+                <p class="text-sm text-gray-500 mt-1">Поставить задачу на развёртывание нового сайта: адрес, источник (пресет или репо), параметры БД.</p>
+            </div>
+            <div class="p-6">
+                <form id="deploy-form" class="space-y-4">
+
+                    {{-- Site address --}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Адрес сайта</label>
+                        <input id="ds-address" name="site_address" type="text" placeholder="example.our24.ru"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    </div>
+
+                    {{-- Source type toggle --}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Источник</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center gap-2 text-sm cursor-pointer">
+                                <input type="radio" name="ds-source-type" value="preset" id="ds-type-preset" checked
+                                    class="accent-indigo-600" onchange="deployToggleSource('preset')">
+                                Пресет из списка
+                            </label>
+                            <label class="flex items-center gap-2 text-sm cursor-pointer">
+                                <input type="radio" name="ds-source-type" value="repo" id="ds-type-repo"
+                                    class="accent-indigo-600" onchange="deployToggleSource('repo')">
+                                Репозиторий (URL)
+                            </label>
+                        </div>
+                    </div>
+
+                    {{-- Preset selector --}}
+                    <div id="ds-preset-block">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Пресет</label>
+                        <select id="ds-preset" name="preset_id"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                            <option value="">— выберите пресет —</option>
+                            @foreach($presets as $preset)
+                                <option value="{{ $preset['id'] }}" data-repo="{{ $preset['repo'] }}">
+                                    {{ $preset['name'] }} — {{ $preset['repo'] }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Custom repo URL --}}
+                    <div id="ds-repo-block" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">URL репозитория</label>
+                        <input id="ds-repo" name="repo_url" type="text" placeholder="git@github.com:org/repo.git"
+                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    </div>
+
+                    {{-- DB parameters --}}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Параметры базы данных</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Хост</label>
+                                <input id="ds-db-host" name="db_host" type="text" placeholder="127.0.0.1"
+                                    value="127.0.0.1"
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Порт</label>
+                                <input id="ds-db-port" name="db_port" type="number" placeholder="3306"
+                                    value="3306" min="1" max="65535"
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Имя базы данных</label>
+                                <input id="ds-db-name" name="db_name" type="text" placeholder="mydb"
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Пользователь</label>
+                                <input id="ds-db-user" name="db_user" type="text" placeholder="root"
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs text-gray-500 mb-1">Пароль</label>
+                                <input id="ds-db-password" name="db_password" type="password" placeholder="••••••••"
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <button type="submit"
+                            class="px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:opacity-50"
+                            id="ds-submit">
+                            Развернуть сайт
+                        </button>
+                        <span id="ds-result" class="text-sm"></span>
+                    </div>
+                </form>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -281,6 +381,88 @@
                         'Accept': 'application/json',
                     },
                     body: JSON.stringify({ site, command, parameters: params }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    result.className = 'text-sm text-green-600';
+                    result.textContent = data.message;
+                } else {
+                    result.className = 'text-sm text-red-600';
+                    result.textContent = data.message || data.error || 'Ошибка.';
+                }
+            } catch (err) {
+                result.className = 'text-sm text-red-600';
+                result.textContent = 'Сетевая ошибка.';
+            } finally {
+                btn.disabled = false;
+            }
+        });
+        // ───────────────── Deploy Site Widget ─────────────────
+
+        function deployToggleSource(type) {
+            document.getElementById('ds-preset-block').classList.toggle('hidden', type !== 'preset');
+            document.getElementById('ds-repo-block').classList.toggle('hidden', type !== 'repo');
+        }
+
+        document.getElementById('deploy-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const btn    = document.getElementById('ds-submit');
+            const result = document.getElementById('ds-result');
+
+            const address    = document.getElementById('ds-address').value.trim();
+            const sourceType = document.querySelector('input[name="ds-source-type"]:checked').value;
+            const presetId   = document.getElementById('ds-preset').value.trim();
+            const repoUrl    = document.getElementById('ds-repo').value.trim();
+            const dbHost     = document.getElementById('ds-db-host').value.trim();
+            const dbPort     = document.getElementById('ds-db-port').value.trim();
+            const dbName     = document.getElementById('ds-db-name').value.trim();
+            const dbUser     = document.getElementById('ds-db-user').value.trim();
+            const dbPassword = document.getElementById('ds-db-password').value;
+
+            if (!address) {
+                result.className = 'text-sm text-red-600';
+                result.textContent = 'Укажите адрес сайта.';
+                return;
+            }
+            if (sourceType === 'preset' && !presetId) {
+                result.className = 'text-sm text-red-600';
+                result.textContent = 'Выберите пресет.';
+                return;
+            }
+            if (sourceType === 'repo' && !repoUrl) {
+                result.className = 'text-sm text-red-600';
+                result.textContent = 'Укажите URL репозитория.';
+                return;
+            }
+            if (!dbHost || !dbPort || !dbName || !dbUser) {
+                result.className = 'text-sm text-red-600';
+                result.textContent = 'Заполните все обязательные поля БД.';
+                return;
+            }
+
+            btn.disabled = true;
+            result.className = 'text-sm text-gray-500';
+            result.textContent = 'Отправка…';
+
+            try {
+                const res = await fetch('{{ route("service.deploy-site") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': CSRF,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        site_address: address,
+                        source_type:  sourceType,
+                        preset_id:    sourceType === 'preset' ? presetId : null,
+                        repo_url:     sourceType === 'repo'   ? repoUrl  : null,
+                        db_host:      dbHost,
+                        db_port:      dbPort,
+                        db_name:      dbName,
+                        db_user:      dbUser,
+                        db_password:  dbPassword,
+                    }),
                 });
                 const data = await res.json();
                 if (res.ok) {

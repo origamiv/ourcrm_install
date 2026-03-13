@@ -10,8 +10,9 @@ class ServiceController extends Controller
 {
     public function index()
     {
-        $sites = $this->getSites();
-        return view('service.index', compact('sites'));
+        $sites   = $this->getSites();
+        $presets = config('app.deploy_presets', []);
+        return view('service.index', compact('sites', 'presets'));
     }
 
     public function gitMerge(Request $request)
@@ -72,6 +73,63 @@ class ServiceController extends Controller
         return response()->json([
             'status'  => 'sent',
             'message' => "Команда «{$request->command}» отправлена на сайт {$request->site}.",
+        ]);
+    }
+
+    public function deploySite(Request $request)
+    {
+        $request->validate([
+            'site_address'  => 'required|string|max:253',
+            'source_type'   => 'required|in:preset,repo',
+            'preset_id'     => 'required_if:source_type,preset|nullable|string|max:100',
+            'repo_url'      => 'required_if:source_type,repo|nullable|string|max:500',
+            'db_host'       => 'required|string|max:253',
+            'db_port'       => 'required|integer|min:1|max:65535',
+            'db_name'       => 'required|string|max:100',
+            'db_user'       => 'required|string|max:100',
+            'db_password'   => 'nullable|string|max:255',
+        ]);
+
+        $queueFile = 'deploy_site_queue.json';
+
+        $queue = [];
+        if (Storage::disk('local')->exists($queueFile)) {
+            $queue = json_decode(Storage::disk('local')->get($queueFile), true) ?: [];
+        }
+
+        $repo = null;
+        if ($request->source_type === 'preset') {
+            $presets = config('app.deploy_presets', []);
+            foreach ($presets as $preset) {
+                if ($preset['id'] === $request->preset_id) {
+                    $repo = $preset['repo'];
+                    break;
+                }
+            }
+        } else {
+            $repo = $request->repo_url;
+        }
+
+        $queue[] = [
+            'site_address' => $request->site_address,
+            'source_type'  => $request->source_type,
+            'preset_id'    => $request->preset_id,
+            'repo'         => $repo,
+            'db'           => [
+                'host'     => $request->db_host,
+                'port'     => (int) $request->db_port,
+                'name'     => $request->db_name,
+                'user'     => $request->db_user,
+                'password' => $request->db_password ?? '',
+            ],
+            'queued_at' => now()->toDateTimeString(),
+        ];
+
+        Storage::disk('local')->put($queueFile, json_encode($queue, JSON_PRETTY_PRINT));
+
+        return response()->json([
+            'status'  => 'queued',
+            'message' => "Развёртывание сайта {$request->site_address} поставлено в очередь.",
         ]);
     }
 
