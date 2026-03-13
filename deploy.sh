@@ -1,69 +1,76 @@
 #!/bin/bash
-#!/bin/bash
-set -e
-export PATH=/usr/local/bin:/usr/bin:/root/.npm-global/bin:$PATH
-
-# если node через nvm
-if [ -f "$HOME/.nvm/nvm.sh" ]; then
-  . "$HOME/.nvm/nvm.sh"
-fi
-
 set -e
 export COMPOSER_ALLOW_SUPERUSER=1
-# ✅ Задаём алиас на PHP 8.2
-# alias php="/opt/php82/bin/php"
 
-# или вариант с приоритетом в PATH:
-# export PATH="/opt/php82/bin:$PATH"
-
-echo "------------ whoami"
+echo "------------ USER & PATH"
 whoami
-ls -la
+echo "PATH=$PATH"
 
-echo "------------ php"
+# -------------------------
+# PHP (если нужно выбрать версию)
+# -------------------------
+# export PATH="/opt/php82/bin:$PATH"
 php -v
 
+# -------------------------
+# Composer
+# -------------------------
 echo "------------ composer"
-#php /usr/local/bin/composer install
-composer install
+composer install --no-interaction --optimize-autoloader --no-dev
 
-echo "------------ pm2"
-export PATH=$PATH:/usr/local/bin:/usr/bin:/root/.npm-global/bin
-command -v pm2 >/dev/null 2>&1 || { echo "pm2 not found, skipping..."; }
+# -------------------------
+# Node/NPM/PM2 через NVM
+# -------------------------
+echo "------------ node/npm/pm2"
 
+export NVM_DIR="/www/server/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+nvm use default || nvm use 24
+
+# на всякий случай добавляем PATH
+export PATH="/www/server/nvm/versions/node/v24.14.0/bin:$PATH"
+
+echo "Node: $(node -v)"
+echo "NPM: $(npm -v)"
+echo "PM2: $(pm2 -v || echo 'pm2 not found')"
+
+# -------------------------
+# PM2 процессы
+# -------------------------
 if command -v pm2 >/dev/null 2>&1; then
-    pm2 delete 'ssh_tunnel' || true
-    pm2 start 'bash ssh_tunnel.sh' --watch --name ssh_tunnel
+    # ssh_tunnel
+    pm2 describe ssh_tunnel >/dev/null 2>&1 && pm2 reload ssh_tunnel || pm2 start 'bash ssh_tunnel.sh' --watch --name ssh_tunnel
 
-    pm2 delete 'git_merge_watcher' || true
-    pm2 start 'php artisan git:merge-watcher' --name git_merge_watcher
+    # git_merge_watcher
+    pm2 describe git_merge_watcher >/dev/null 2>&1 && pm2 reload git_merge_watcher || pm2 start 'php artisan git:merge-watcher' --name git_merge_watcher
 fi
 
+# -------------------------
+# Laravel migrate
+# -------------------------
 echo "------------ migrate"
-php artisan migrate
-# php artisan project:menu
+php artisan migrate --force
 
-echo "------------ swagger"
-# php artisan l5-swagger:generate
-
-echo "------------ npm"
-npm install @vitejs/plugin-vue
+# -------------------------
+# npm install & build
+# -------------------------
+echo "------------ npm install & build"
+npm install @vitejs/plugin-vue --save-dev
 npm install
 npm run build
 
-
-
-#cd app/Bots
-#npm install
-#pm2 delete 'chats_mattermost_bot' || true
-#pm2 start 'node mattermost_bot.js' --name chats_mattermost_bot
-#cd ../..
-
+# -------------------------
+# Отправка уведомлений о релизе
+# -------------------------
 COMMIT_INFO=$(git log -1 --format="%ad %h %s %an" --date=format:"%d.%m %H:%M")
 curl -G --data-urlencode "message=Релиз install.our24.ru на проде: $COMMIT_INFO" https://aider.our24.ru/send
 
+# -------------------------
+# pyTalking
+# -------------------------
+echo "------------ pyTalking"
 cd ../pytalking.our24.ru
-pm2 delete 'pyTalking' || true
-pm2 start 'bash start.sh' --watch --name pyTalking
+pm2 describe pyTalking >/dev/null 2>&1 && pm2 reload pyTalking || pm2 start 'bash start.sh' --watch --name pyTalking
 curl -G --data-urlencode "message=pyTalking перезапущен" https://aider.our24.ru/send
 
+echo "------------ DEPLOY DONE"
