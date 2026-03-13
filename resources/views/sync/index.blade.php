@@ -1,22 +1,24 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sync Status (Vue)</title>
+<x-app-layout>
+    <x-slot name="title">
+        Статус синхронизации
+    </x-slot>
+
+    <!-- Bootstrap CSS for compatibility with existing sync UI -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
     <style>
         .progress { height: 25px; }
         .progress-bar { font-size: 0.9rem; line-height: 25px; }
         [v-cloak] { display: none; }
+        /* Fix for bootstrap conflict with tailwind if any */
+        .card { margin-bottom: 1rem; }
     </style>
-</head>
-<body class="bg-light">
-    <div id="app" class="container mt-5" v-cloak>
+
+    <div id="app" v-cloak>
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>Статус синхронизации</h1>
+            <h1 class="h2">Статус синхронизации</h1>
             <div class="text-muted">
                 Обновлено: @{{ lastUpdate }}
                 <span v-if="loading" class="spinner-border spinner-border-sm ms-2"></span>
@@ -28,7 +30,7 @@
             <div class="col-md-6">
                 <div class="card border-primary shadow-sm h-100">
                     <div class="card-body">
-                        <h3 class="card-title text-primary">
+                        <h3 class="card-title text-primary h5">
                             <i class="bi bi-table me-2"></i>Прогресс по таблицам
                         </h3>
                         <div class="d-flex justify-content-between mb-2">
@@ -37,7 +39,7 @@
                         </div>
                         <div class="progress" style="height: 35px;">
                             <div class="progress-bar bg-primary progress-bar-striped progress-bar-animated" role="progressbar" :style="{ width: stats.overallProgressTables + '%' }">
-                                <h5 class="mb-0">@{{ stats.overallProgressTables }}%</h5>
+                                <h5 class="mb-0" style="font-size: 1rem;">@{{ stats.overallProgressTables }}%</h5>
                             </div>
                         </div>
                     </div>
@@ -46,7 +48,7 @@
             <div class="col-md-6">
                 <div class="card border-info shadow-sm h-100">
                     <div class="card-body">
-                        <h3 class="card-title text-info">
+                        <h3 class="card-title text-info h5">
                             <i class="bi bi-database me-2"></i>Прогресс по записям
                         </h3>
                         <div class="d-flex justify-content-between mb-2">
@@ -55,7 +57,7 @@
                         </div>
                         <div class="progress" style="height: 35px;">
                             <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" role="progressbar" :style="{ width: stats.overallProgressRows + '%' }">
-                                <h5 class="mb-0 text-dark">@{{ stats.overallProgressRows }}%</h5>
+                                <h5 class="mb-0 text-dark" style="font-size: 1rem;">@{{ stats.overallProgressRows }}%</h5>
                             </div>
                         </div>
                     </div>
@@ -67,7 +69,7 @@
             <div class="col-md-12">
                 <div class="card border-warning shadow-sm">
                     <div class="card-body">
-                        <h3 class="card-title text-warning">
+                        <h3 class="card-title text-warning h5">
                             <i class="bi bi-bar-chart-steps me-2"></i>Топ-10 больших таблиц
                         </h3>
                         <div class="row">
@@ -86,7 +88,7 @@
         <!-- Прогресс по схемам -->
         <div class="row mb-5">
             <div class="col-md-12">
-                <h3>Прогресс по схемам</h3>
+                <h3 class="h4">Прогресс по схемам</h3>
                 <div v-for="schema in schemas" :key="schema.name" class="mb-3">
                     <div class="d-flex justify-content-between mb-1">
                         <strong>@{{ schema.name }}</strong>
@@ -104,7 +106,7 @@
         <!-- Детализация по таблицам -->
         <div class="row">
             <div class="col-md-12">
-                <h3>Детализация по таблицам</h3>
+                <h3 class="h4">Детализация по таблицам</h3>
 
                 <!-- Mobile Cards View -->
                 <div class="d-md-none">
@@ -224,7 +226,7 @@
                         loading.value = false;
                     }
                 };
-const formatNumber = (num) => {
+                const formatNumber = (num) => {
                     return new Intl.NumberFormat('ru-RU').format(num);
                 };
 
@@ -254,5 +256,4 @@ const formatNumber = (num) => {
             }
         }).mount('#app');
     </script>
-</body>
-</html>
+</x-app-layout>
